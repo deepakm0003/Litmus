@@ -59,12 +59,21 @@ is not done, and the roadmap says so.
 
 ## 3. Memory footprint
 
-Four models load at import: two face checkpoints, two voice checkpoints, the
-fine-tuned CNN, plus MTCNN. Expect **~2 GB resident**.
+Measured, not estimated: **~375 MB resident** after import, rising to about
+420 MB once the face detector and the second-opinion baselines are warm.
 
-A 512 MB free tier will be killed on startup. Budget **2 GB minimum**, and note
-that first inference after a cold start takes several seconds while the weights
-page in.
+Models load lazily, on first use rather than at import. That matters when
+diagnosing a crash: the service starts cleanly, passes its health check, and is
+then killed by the first real request. A green deploy followed by a 502 is this,
+not a broken build.
+
+It fits a 512 MB instance, though not with much headroom — 1 GB is comfortable.
+First inference after a cold start takes several seconds while weights page in.
+
+Face detection deliberately does **not** use the TensorFlow-based mtcnn package.
+Measured, that dependency cost 338 MB resident — more than torch, torchvision
+and every Litmus model combined — to locate five landmarks. facenet-pytorch does
+the same work on the torch already loaded, for roughly 30 MB.
 
 `models/face/faceguard_cnn.pt` is **44 MB** and must ship with the deployment —
 without it the pipeline silently falls back to the public checkpoints, which
