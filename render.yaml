@@ -17,6 +17,12 @@ services:
     # lazily at runtime, so a HuggingFace outage delays the demo rather than
     # breaking the deploy.
     buildCommand: |
+      pip install --upgrade pip
+      # CPU-only torch. The default PyPI wheels bundle the NVIDIA CUDA runtime
+      # (~2 GB) which is dead weight on a CPU instance and blows the build out
+      # on disk and time. Installed first so the pinned versions below are
+      # already satisfied and pip does not pull the CUDA build over the top.
+      pip install torch==2.2.1 torchvision==0.17.1 --index-url https://download.pytorch.org/whl/cpu
       pip install -r backend/requirements.txt
       python -c "
       import os
@@ -41,6 +47,11 @@ services:
     healthCheckPath: /health
     autoDeploy: false
     envVars:
+      # Render defaults to a very recent Python (3.14 at time of writing), which
+      # has no wheels for the pinned torch. .python-version covers this too;
+      # this is the belt-and-braces version that is visible in the dashboard.
+      - key: PYTHON_VERSION
+        value: 3.11.9
       # Where the pre-downloaded checkpoints live. Set for both build and
       # runtime so the cache written during the build is the one the running
       # service reads.
