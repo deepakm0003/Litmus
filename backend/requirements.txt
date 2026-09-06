@@ -17,12 +17,12 @@ scikit-learn==1.9.0          # calibration bundle in face_detector.joblib
 joblib==1.4.2
 opencv-python==4.8.1.78
 
-# MTCNN face detection runs on a Keras backend, so TensorFlow is required
-# even though the classifier itself is PyTorch.
-mtcnn==1.0.0
-tensorflow==2.20.0
-keras==3.13.1
-lz4==4.4.5
+# Face detection. facenet-pytorch runs MTCNN on the torch that is already
+# loaded. The original mtcnn package needs TensorFlow + Keras, measured at
+# 338 MB resident — more than torch and every Litmus model combined, purely to
+# locate five landmarks. That single dependency was what pushed the service
+# past a 512 MB instance limit on its first request.
+facenet-pytorch==2.6.0
 
 # --- Voice pipeline --------------------------------------------------------
 transformers==4.53.3

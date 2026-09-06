@@ -226,11 +226,74 @@ def _pipelines():
     return _m1, _m2
 
 
+class _TorchMTCNN:
+    """
+    facenet-pytorch's MTCNN behind the API the original mtcnn package exposed.
+
+    WHY THIS EXISTS
+    ---------------
+    The mtcnn package runs on TensorFlow/Keras. Measured, that dependency costs
+    338 MB resident — more than torch, torchvision and every Litmus model put
+    together — purely to draw five landmarks on a face. On a 512 MB instance it
+    is the single reason the service is killed on its first request.
+
+    facenet-pytorch runs the same MTCNN architecture on the torch that is
+    already loaded, for roughly 30 MB.
+
+    The output shape is deliberately identical to the old package's: a list of
+    {box, confidence, keypoints} dicts, with keypoints named left_eye,
+    right_eye, nose, mouth_left and mouth_right. LiveChallenge estimates head
+    yaw from those exact keys, so anything else silently breaks the challenge
+    rather than failing loudly.
+    """
+
+    def __init__(self) -> None:
+        from facenet_pytorch import MTCNN as _M
+
+        # keep_all: crop_face picks the largest of several faces itself, and a
+        # second face in frame is information the caller needs, not noise.
+        self._m = _M(keep_all=True, device="cpu")
+
+    _KEYS = ("left_eye", "right_eye", "nose", "mouth_left", "mouth_right")
+
+    def detect_faces(self, arr):
+        boxes, probs, points = self._m.detect(arr, landmarks=True)
+        if boxes is None:
+            return []
+
+        out = []
+        for i, box in enumerate(boxes):
+            x1, y1, x2, y2 = (float(v) for v in box)
+            conf = float(probs[i]) if probs is not None and probs[i] is not None else 0.0
+            keypoints = {}
+            if points is not None and i < len(points):
+                for name, (px, py) in zip(self._KEYS, points[i]):
+                    keypoints[name] = (int(round(float(px))), int(round(float(py))))
+            out.append({
+                # x, y, width, height — the format the rest of this module reads.
+                "box": [int(round(x1)), int(round(y1)),
+                        int(round(x2 - x1)), int(round(y2 - y1))],
+                "confidence": conf,
+                "keypoints": keypoints,
+            })
+        return out
+
+
 def _face_detector():
+    """
+    Return a face detector, preferring the torch implementation.
+
+    Falls back to the TensorFlow package if facenet-pytorch is not installed,
+    so an existing environment keeps working unchanged — it simply uses a great
+    deal more memory.
+    """
     global _detector
     if _detector is None:
-        from mtcnn import MTCNN
-        _detector = MTCNN()
+        try:
+            _detector = _TorchMTCNN()
+        except Exception:  # noqa: BLE001 — fall back rather than lose detection
+            from mtcnn import MTCNN
+            _detector = MTCNN()
     return _detector
 
 
