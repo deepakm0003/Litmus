@@ -14,6 +14,29 @@ from typing import Dict, Any
 from PIL import Image
 import io
 
+# ---------------------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------------------
+#
+# Load .env before importing anything else from this package. The signing
+# secrets are read at MODULE IMPORT time into module-level constants
+# (trustline, livechallenge, report, consortium), so loading the file after
+# those imports would silently leave every one of them on its demo default —
+# the failure would be invisible until someone forged a verification code.
+#
+# python-dotenv is optional: on a real deployment the variables come from the
+# host's own environment and no .env file exists. Real environment variables
+# always win; the file never overwrites them.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(
+        os.path.join(os.path.dirname(__file__), "..", ".env"),
+        override=False,
+    )
+except ImportError:  # pragma: no cover — the file path is simply not used
+    pass
+
 # Add models paths to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'models', 'face'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'models', 'voice'))

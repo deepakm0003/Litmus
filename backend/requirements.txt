@@ -2,6 +2,7 @@
 # Pinned to the versions this system is developed and tested against.
 
 # --- API layer -------------------------------------------------------------
+python-dotenv==1.0.1         # loads .env in local development only
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
 python-multipart==0.0.12

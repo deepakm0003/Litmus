@@ -5,6 +5,8 @@
 # Secrets. Every credential is read from the environment; nothing is committed.
 .env
 .env.*
+# The template is committed; it holds placeholders only.
+!.env.example
 *.pem
 *.key
 
