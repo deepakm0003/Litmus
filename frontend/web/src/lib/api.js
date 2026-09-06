@@ -8,8 +8,28 @@
  * on a dead socket while a jury watches.
  */
 
+/**
+ * VITE_API_BASE is baked in at build time and wins over everything else.
+ *
+ * It exists for the split deployment: when the console is hosted separately
+ * (Vercel) the backend lives on another origin entirely, and same-origin
+ * discovery cannot find it. Worse, it does not fail cleanly — a static host
+ * answers /health with the SPA shell, so without this the console would hunt
+ * through the candidates below and settle on "Backend offline".
+ *
+ * Unset, everything behaves exactly as before: same origin first, which is the
+ * case when the API serves the bundle at /console.
+ */
+const CONFIGURED_BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE
+    ? String(import.meta.env.VITE_API_BASE)
+    : ''
+  ).replace(/\/+$/, '');
+
 const CANDIDATES = [
-  // Same origin first — the backend serves the built bundle at /console.
+  // Configured backend, if this build was given one.
+  CONFIGURED_BASE,
+  // Same origin — the backend serves the built bundle at /console.
   typeof window !== 'undefined' ? window.location.origin : '',
   'http://127.0.0.1:8000',
   'http://localhost:8000',

@@ -61,3 +61,6 @@ Thumbs.db
 desktop.ini
 .idea/
 .vscode/
+
+# HuggingFace checkpoint cache (populated at build time on the host)
+.hf_cache/

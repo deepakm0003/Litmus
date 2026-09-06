@@ -10,7 +10,30 @@ services:
     runtime: python
     plan: standard          # ~2 GB RAM. The free 512 MB tier is killed on
                             # startup: torch, tensorflow and MTCNN load at import.
-    buildCommand: pip install -r backend/requirements.txt
+    # The second command downloads the four public checkpoints at BUILD time.
+    # Without it transformers fetches them on the first request instead —
+    # roughly 1.9 GB over the network while a judge waits, and again after
+    # every restart. Failures here are non-fatal: the models still download
+    # lazily at runtime, so a HuggingFace outage delays the demo rather than
+    # breaking the deploy.
+    buildCommand: |
+      pip install -r backend/requirements.txt
+      python -c "
+      import os
+      os.environ.setdefault('TF_CPP_MIN_LOG_LEVEL', '3')
+      from transformers import pipeline
+      for task, name in [
+          ('image-classification', 'prithivMLmods/Deep-Fake-Detector-Model'),
+          ('image-classification', 'dima806/deepfake_vs_real_image_detection'),
+          ('audio-classification', 'MelodyMachine/Deepfake-audio-detection-V2'),
+          ('audio-classification', 'motheecreator/Deepfake-audio-detection'),
+      ]:
+          try:
+              pipeline(task, model=name)
+              print('cached', name, flush=True)
+          except Exception as exc:
+              print('WARN could not pre-cache', name, exc, flush=True)
+      "
     # --workers 1 is mandatory, not a preference. Sessions live in process
     # memory, so a challenge minted by one worker is invisible to another and
     # LiveChallenge fails about half the time.
@@ -18,6 +41,16 @@ services:
     healthCheckPath: /health
     autoDeploy: false
     envVars:
+      # Where the pre-downloaded checkpoints live. Set for both build and
+      # runtime so the cache written during the build is the one the running
+      # service reads.
+      - key: HF_HOME
+        value: /opt/render/project/src/.hf_cache
+      # Comma-separated allowlist of origins permitted to call this API.
+      # Set this to your Vercel URL, e.g. https://litmus.vercel.app
+      # Unset, it falls back to "*", which keeps /console working same-origin.
+      - key: LITMUS_ALLOWED_ORIGINS
+        sync: false
       # Signing keys. Each has a development default that is public in this
       # repository — generate real ones or the verification codes are forgeable.
       #   python -c "import secrets; print(secrets.token_hex(32))"

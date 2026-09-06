@@ -49,13 +49,38 @@ app = FastAPI(
     version="3.0.0",
 )
 
-# CORS middleware for frontend
+# ---------------------------------------------------------------------------
+# CORS
+# ---------------------------------------------------------------------------
+#
+# Two deployment shapes are supported:
+#
+#   same-origin   the API serves the built console at /console, so the browser
+#                 never makes a cross-origin request and CORS is irrelevant.
+#   split         the console is hosted separately (Vercel) and calls this API
+#                 across origins, which is where the settings below matter.
+#
+# LITMUS_ALLOWED_ORIGINS is a comma-separated allowlist, e.g.
+#   https://litmus.vercel.app,https://litmus-git-main-you.vercel.app
+#
+# Left unset it falls back to "*", which keeps local development and the
+# same-origin deployment working. Note that "*" cannot be combined with
+# credentialed requests per the CORS spec, so allow_credentials is enabled only
+# when a real allowlist is configured.
+_origins_env = os.environ.get("LITMUS_ALLOWED_ORIGINS", "").strip()
+_allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()] or ["*"]
+_allow_credentials = _allowed_origins != ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
+    allow_origins=_allowed_origins,
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Without this the browser hides these from cross-origin JavaScript, and the
+    # downloaded record silently loses its reference number and verification
+    # code — the two things that make the document checkable.
+    expose_headers=["X-Litmus-Reference", "X-Litmus-Code"],
 )
 
 
