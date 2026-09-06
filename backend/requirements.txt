@@ -1,6 +1,35 @@
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-multipart==0.0.6
-pillow==11.0.0
-transformers==4.53.3
+# Litmus — backend runtime dependencies
+# Pinned to the versions this system is developed and tested against.
+
+# --- API layer -------------------------------------------------------------
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+
+# --- Face pipeline ---------------------------------------------------------
 torch==2.2.1
+torchvision==0.17.1
+pillow==11.0.0
+numpy==1.26.4
+scipy==1.12.0
+scikit-learn==1.9.0          # calibration bundle in face_detector.joblib
+joblib==1.4.2
+opencv-python==4.8.1.78
+
+# MTCNN face detection runs on a Keras backend, so TensorFlow is required
+# even though the classifier itself is PyTorch.
+mtcnn==1.0.0
+tensorflow==2.20.0
+keras==3.13.1
+lz4==4.4.5
+
+# --- Voice pipeline --------------------------------------------------------
+transformers==4.53.3
+librosa==0.11.0
+
+# --- Speech-presence detection (server-side audio decode) ------------------
+av==15.1.0
+
+# --- Records and outbound ---------------------------------------------------
+reportlab==4.2.2             # PDF verification records
+requests==2.31.0             # DoT FRI lookups, SMTP2GO HTTP API

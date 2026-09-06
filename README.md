@@ -199,5 +199,3 @@ Things that are demo-scoped and would change for a pilot:
 - `LITMUS_TRUSTLINE_SECRET` is read from the environment with a demo default.
   Production: HSM/KMS custody with scheduled rotation.
 - CORS is `allow_origins=["*"]`. Lock down before anything leaves localhost.
-
-
