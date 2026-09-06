@@ -17,10 +17,10 @@ import sys
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 
 MODELS = [
-    ("image-classification", "prithivMLmods/Deep-Fake-Detector-Model"),
-    ("image-classification", "dima806/deepfake_vs_real_image_detection"),
-    ("audio-classification", "MelodyMachine/Deepfake-audio-detection-V2"),
-    ("audio-classification", "motheecreator/Deepfake-audio-detection"),
+    ("image-classification", "Deep-Fake-Detector-Model"),
+    ("image-classification", "deepfake_vs_real_image_detection"),
+    ("audio-classification", "Deepfake-audio-detection-V2"),
+    ("audio-classification", "Deepfake-audio-detection"),
 ]
 
 
