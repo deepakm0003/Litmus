@@ -1,0 +1,13 @@
+.git
+.env
+node_modules
+frontend/web/node_modules
+backend/venv
+**/__pycache__
+*.pyc
+models/**/kaggle_data
+models/face/prepared_dataset
+models/face/split_dataset
+models/face/train_sample_videos
+models/voice/models1028
+.hf_cache
