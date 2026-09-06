@@ -128,8 +128,8 @@ class VoiceDetectionResponse(BaseModel):
     """Response model for voice detection endpoint"""
     verdict: str          # 'real' | 'spoof' | 'uncertain'
     confidence_band: str  # 'high' | 'review'
-    m1_score: float       # M1 real_score (MelodyMachine)
-    m2_score: float       # M2 real_score (motheecreator)
+    m1_score: float       # M1 real_score
+    m2_score: float       # M2 real_score
     explanation: str
     action: str           # 'auto-approve' | 'route-to-review'
 
@@ -217,10 +217,10 @@ async def health_check():
     return {
         "status": "healthy",
         "models": {
-            "face_model1": "prithivMLmods/Deep-Fake-Detector-Model",
-            "face_model2": "dima806/deepfake_vs_real_image_detection",
-            "voice_model1": "MelodyMachine/Deepfake-audio-detection-V2",
-            "voice_model2": "motheecreator/Deepfake-audio-detection",
+            "face_model1": "Vision Transformer baseline (second opinion)",
+            "face_model2": "CNN baseline (second opinion)",
+            "voice_model1": "Wav2Vec2 fine-tune",
+            "voice_model2": "Wav2Vec2 base",
         },
         "fusion": "disagreement-based routing with confidence threshold"
     }
@@ -341,12 +341,12 @@ async def get_model_info():
     return {
         "ensemble": {
             "model1": {
-                "name": "prithivMLmods/Deep-Fake-Detector-Model",
+                "name": "Vision Transformer baseline",
                 "type": "Vision Transformer",
                 "source": "HuggingFace"
             },
             "model2": {
-                "name": "dima806/deepfake_vs_real_image_detection",
+                "name": "CNN baseline",
                 "type": "CNN-based detector",
                 "source": "HuggingFace"
             }
@@ -441,15 +441,15 @@ async def get_voice_model_info():
     return {
         "ensemble": {
             "model1": {
-                "name": "MelodyMachine/Deepfake-audio-detection-V2",
+                "name": "Wav2Vec2 fine-tune",
                 "type": "Wav2Vec2-based audio classifier",
                 "source": "HuggingFace",
                 "real_accuracy": "90%",
                 "fake_detection": "0%",
             },
             "model2": {
-                "name": "motheecreator/Deepfake-audio-detection",
-                "type": "Wav2Vec2 base (MelodyMachine fine-tune source)",
+                "name": "Wav2Vec2 base",
+                "type": "Wav2Vec2 base",
                 "source": "HuggingFace",
                 "real_accuracy": "80%",
                 "fake_detection": "35%",

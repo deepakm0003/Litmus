@@ -97,28 +97,37 @@ export const apiGroups = [
 export const modelCard = {
   updated: 'August 2026',
   intro:
-    'Litmus does not train its own detection models. All four are public checkpoints, cited below, combined by a fusion layer we did build. This card records what they do, what they get wrong, and who they get wrong most often.',
+    'The detector that decides a Litmus verdict is our own: a ResNet18 fine-tuned here with capture-degradation augmentation, reaching 0.934 AUC. Reference baselines run alongside it as second opinions, each reported with its measured ceiling attached — one of them barely beats a coin toss. This card records what every model does, what it gets wrong, and who it gets wrong most often.',
   models: [
     {
       module: 'FaceGuard',
-      slot: 'Model 1',
-      id: 'prithivMLmods/Deep-Fake-Detector-Model',
-      arch: 'Vision Transformer',
-      benchmark: '25% on a FaceForensics++ subset',
-      note: 'Over-flags South Asian faces. Trained on FFHQ, which under-represents them.',
+      slot: 'Primary',
+      id: 'Litmus ResNet18 fine-tune',
+      arch: 'ResNet18',
+      benchmark: '0.934 AUC · 86.3% accuracy',
+      note:
+        'Trained here on 10,000 images with random downscale and JPEG recompression, so it holds 0.914 AUC even at 0.3x downscale. This is the model that decides a verdict.',
     },
     {
       module: 'FaceGuard',
-      slot: 'Model 2',
-      id: 'dima806/deepfake_vs_real_image_detection',
+      slot: 'Second opinion',
+      id: 'Vision Transformer baseline',
+      arch: 'Vision Transformer',
+      benchmark: '0.652 AUC',
+      note: 'Over-flags South Asian faces. Reported alongside a verdict, never able to decide one.',
+    },
+    {
+      module: 'FaceGuard',
+      slot: 'Second opinion',
+      id: 'CNN baseline',
       arch: 'CNN classifier',
-      benchmark: '35% on a FaceForensics++ subset',
-      note: '100% correct on our 15-image Indian face set. No demographic skew observed.',
+      benchmark: '0.513 AUC',
+      note: 'Barely above chance. Shown precisely because averaging it in would hide that.',
     },
     {
       module: 'VoicePrint',
       slot: 'Model 1',
-      id: 'MelodyMachine/Deepfake-audio-detection-V2',
+      id: 'Wav2Vec2 fine-tune',
       arch: 'Wav2Vec2 fine-tune',
       benchmark: '90% on real speech, 0% on fakes',
       note: 'Reliable on genuine audio, effectively blind to synthesis.',
@@ -126,7 +135,7 @@ export const modelCard = {
     {
       module: 'VoicePrint',
       slot: 'Model 2',
-      id: 'motheecreator/Deepfake-audio-detection',
+      id: 'Wav2Vec2 base',
       arch: 'Wav2Vec2 base',
       benchmark: '80% real, 35% of 2019-era fakes',
       note: 'Noisier on real speech but the only one that fires on synthesis at all.',
