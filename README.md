@@ -8,209 +8,374 @@ app_port: 7860
 pinned: false
 ---
 
+<div align="center">
+
 # Litmus
 
-**A two-way AI trust layer for TVS Credit's lending pipeline.**
+**A two-way AI trust layer for lending.**
+
+*Every fake has a tell. We read it before the loan does.*
+
 TVS Credit E.P.I.C 8.0 — IT Challenge · Problem Statement (b): Decoding Machine-Generated Trust
 
-> Every fake has a tell. We catch it before the loan does.
+**[▶ Open the live console](https://yea-rat-tagged-wages.trycloudflare.com/console)** · [Presentation script](PRESENTATION_SCRIPT.md) · [Deployment](DEPLOYMENT.md)
+
+`FastAPI` · `React 19` · `PyTorch` · `HMAC-SHA256` · Deployed on AWS EC2 · 375 MB resident
+
+</div>
 
 ---
 
-## What this is
+## The finding this product is built around
 
-Two questions, one platform:
+Before writing a line of product code, we benchmarked four public deepfake
+detectors — the same class of model this industry sells to banks.
 
-- **Inbound** — is this loan applicant a real, honest human?
-- **Outbound** — is this caller, claiming to be TVS Credit, actually TVS Credit?
+| Test condition | Result |
+|---|---|
+| Real human speech | 80% correctly approved |
+| 2019-era synthetic speech | 35% caught |
+| **Modern neural TTS** | **0% caught** |
+| Face detection, best public baseline | 0.652 AUC |
+| Face detection, **our fine-tune** | **0.934 AUC** |
 
-Every established KYC vendor (HyperVerge, Signzy, IDfy, Karza) solves the first.
-None solve the second, because their contract is with the lender, not with the
-borrower being scammed. That gap is where TrustLine sits.
+Zero. Both models, confidently wrong, every single sample.
 
----
-
-## Build status — honest
-
-| Module | What it does | Status |
-|---|---|---|
-| **FaceGuard** | Two-model deepfake ensemble on the V-CIP frame | **Built, live API** |
-| **VoicePrint** | Two-model spectral ensemble on verification-call audio | **Built, live API** |
-| **TrustLine** | HMAC challenge-response outbound call authentication | **Built, live API** |
-| Identity Forensics | Document tamper detection | Architecture only |
-| CallShield | Synthetic call-pattern flagging | Architecture only |
-| FormPulse | Behavioural biometrics on the application form | Architecture only |
-
-Three modules run. Three are design. The deck labels which is which on the
-architecture slide — that labelling is deliberate and should not be removed.
+**So Litmus never asks a detector to be right forever.** It asks for evidence a
+forgery cannot manufacture — a code a clone was never issued, a physical
+challenge chosen after the attacker's video was made — and routes everything
+uncertain to a human rather than to a rejection.
 
 ---
 
-## Running it
+## Architecture
 
-Python 3.11. All dependencies are already installed in the global environment
-on the build machine; on a fresh machine:
+Two directions of trust. The industry guards one.
+
+![Two directions of trust](docs/img/dg_architecture.png)
+
+**Inbound** — is the applicant a real, present human? Solved by every KYC
+vendor, and still fragile: detectors decay against each new generator, and an
+uncertain result on an under-represented face becomes the rejection of a
+genuine customer.
+
+**Outbound** — is the caller claiming to be the lender actually the lender?
+Almost nobody guards this, because a KYC vendor's contract is with the lender,
+not with the customer being scammed. India lost **₹22,495 crore** to
+caller-impersonation "digital arrest" scams during 2025.
+
+---
+
+## What is built, and what is not
+
+| Module | Question it answers | Measured | Status |
+|---|---|---|---|
+| **FaceGuard** | Is the applicant's face genuine? | 0.934 AUC fine-tuned detector | **Built · live** |
+| **LiveChallenge** | Can this face do what it could not prepare for? | 0.80% blind-guess, 3 rounds | **Built · live** |
+| **TrustLine** | Is the caller really the lender? | 36/36 adversarial tests passing | **Built · live** |
+| **Assurance** | Does the evidence support approving them? | Graded 0–100, not a credit score | **Built · live** |
+| **Records** | Can the outcome be verified later? | HMAC-signed PDF + email | **Built · live** |
+| RingGraph | Is this one of many linked applications? | — | Architecture only |
+| AssetTrace | Does the collateral still exist after disbursal? | — | Architecture only |
+| FormPulse | Is the applicant a script? | — | Architecture only |
+
+Five modules run. Three are design. **That labelling is deliberate and is
+maintained everywhere — README, deck, and public site.**
+
+---
+
+## Quickstart
+
+Python 3.11.
 
 ```bash
+git clone https://github.com/deepakm0003/Litmus.git
+cd Litmus
+
+python -m venv venv && source venv/bin/activate      # Windows: venv\Scripts\activate
+pip install torch==2.2.1 torchvision==0.17.1 --index-url https://download.pytorch.org/whl/cpu
 pip install -r backend/requirements.txt
+
+cp .env.example .env                                 # then fill in the secrets
+python run_backend.py
 ```
 
-Start the API (models load on first import, ~15s):
+Open **http://127.0.0.1:8000/console**
 
-```bash
-cd backend
-python -m uvicorn app:app --host 127.0.0.1 --port 8000
-```
+The console is served **by the API itself**, so it is same-origin — no CORS, no
+API discovery to configure. The first face scan downloads ~1.9 GB of public
+checkpoints; run one yourself before demonstrating anything.
 
-Then open the operations console:
-
-```
-http://127.0.0.1:8000/console
-```
-
-The console is served **by the API itself**, so it is same-origin — no CORS
-issues, no `file://` weirdness. If the backend is down the console falls back
-to a scripted demo mode and says so in the status pill, so it stays clickable
-as a prototype anywhere.
+> **The camera needs HTTPS.** `getUserMedia` only runs in a secure context, with
+> `localhost` the sole exception. On a deployed host without TLS, LiveChallenge
+> and face capture fail silently. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
-## Endpoints
+## LiveChallenge — proof instead of detection
 
-**Inbound**
+![LiveChallenge timeline](docs/img/dg_livechallenge.png)
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/v1/face/detect` | FaceGuard — two models + fusion |
-| POST | `/api/v1/voice/detect` | VoicePrint — two models + fusion |
-| POST | `/api/v1/verify/score` | Fused Litmus Trust Score (face and/or voice) |
-| GET | `/api/v1/face/models` | Model provenance + declared limitations |
-| GET | `/api/v1/voice/models` | Model provenance + declared limitations |
+Injection attacks rose roughly **9× in 2024**, driven by a **28× spike in
+virtual-camera exploits**. Generated video is fed straight into the verification
+software, so the camera is never involved and passive liveness never sees an
+attack at all. No amount of pixel analysis fixes this — the pixels are perfect.
 
-**Outbound (TrustLine)**
+So we stopped asking *"does this face look real?"* and started asking
+*"can this face do something it could not have prepared for?"*
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/v1/trustline/initiate` | Mint an authenticated outbound call session |
-| POST | `/api/v1/trustline/verify` | Customer-side call verification |
-| GET | `/api/v1/trustline/sessions` | Active / recently-verified sessions |
-| GET | `/api/v1/trustline/fraud-feed` | Live fraud intelligence + campaign alerts |
-| GET | `/api/v1/trustline/purposes` | Legitimate vs scam-indicator call purposes |
+| Property | Value |
+|---|---|
+| Challenge space | 5 head poses per round, plus a randomly generated spoken word |
+| Rounds required | 3, each derived only after the previous response |
+| Blind-guess probability | 0.80% theoretical — **measured at 2 of 300** prepared responses |
+| Head pose | Computed geometrically from landmarks; no classifier, nothing to bias or drift |
+| Speech | Decoded server-side; silence, a held tone and a dead mic each fail distinctly |
+| Session TTL | 120 seconds, single use, server-signed |
+
+**An honest removal.** An occlusion check ("hold a hand across your cheek") was
+built and then deleted: a head turn produces the same landmark asymmetry as a
+hand, so it failed genuine applicants. The round count was raised from 2 to 3
+instead. The measured blind-guess rate moved from 0.44% to 0.80% as a result —
+worse on paper, correct in practice.
+
+**Speech is verified on the server, never in the browser.** A client reporting
+"yes, they spoke" is the attacker's own testimony. The audio is decoded from the
+uploaded bytes and measured for energy, modulation and voiced duration.
 
 ---
 
-## Tests
+## TrustLine — the arrow points the other way
 
-```bash
-python backend/test_trustline.py     # 36 adversarial tests, all passing
+![TrustLine inversion](docs/img/dg_trustline.png)
+
+An OTP makes the customer prove themselves to the institution — exactly what
+every scam exploits. The rule *"never share your OTP"* fails because it asks a
+frightened person to refuse a stranger who sounds official.
+
+TrustLine inverts it. **The institution proves itself to the customer.**
+
+```
+SAFFRON-BEACON-47
 ```
 
-The TrustLine suite is adversarial by design — every test is an attack the
-protocol must survive: no active session, guessed codes, replay, cross-customer
-reuse, brute force, expiry, and the digital-arrest purpose short-circuit.
+Word pairs rather than six digits, because digits collide when misheard on a
+noisy showroom call in any language. HMAC-SHA256, derived per session, single
+use, 10-minute TTL, locked after three failed attempts.
+
+**A perfect voice clone still cannot produce a code it was never issued** —
+which is precisely why the 0% detection result above does not sink the system.
+
+Every rejected verification names a live campaign: the number, the script, the
+timing, generated by the attacker at their own cost. An inbound KYC vendor can
+never see this — it happens on calls they are not party to.
+
+```bash
+python backend/test_trustline.py      # 36 adversarial tests, all passing
+```
+
+Every test is an attack the protocol must survive: replay, cross-customer reuse,
+brute force, expiry, no active session, and the digital-arrest purpose
+short-circuit.
+
+---
+
+## The console
+
+![Console wireframe](docs/img/dg_console.png)
+
+Six tabs: applicant verification, LiveChallenge, Assurance, TrustLine, fraud
+desk, consortium. React 19 + Vite, built to a single self-contained bundle and
+served same-origin at `/console`.
 
 ---
 
 ## Measured results
 
-These are our own numbers, run before submission. They are reported in full,
-including the bad ones, because a fraud product that hides its failure modes is
-the thing we are warning against.
+### FaceGuard — the detector we trained ourselves
 
-**FaceGuard**
+Public checkpoints are trained on clean datasets. A real onboarding photo is a
+compressed phone snap. The same face scored **0.966 at 400px and 0.709 at 48px**
+— the model was reading resolution, not authenticity.
 
-- Individual models: 25% and 35% on the FaceForensics++ benchmark subset — each
-  unreliable alone, with opposite biases.
-- Ensemble: **zero silent wrong auto-approvals** across all demo-condition tests.
-- Known failure: both models can share a blind spot and agree while wrong.
-  Observed once, on a compressed benchmark image.
+So we fine-tuned a ResNet18 on 10,000 images with capture-degradation
+augmentation: random 0.25–0.9× downscale-then-upscale, and JPEG recompression at
+quality 30–92.
 
-**VoicePrint**
+| Metric | Fine-tuned | Best public baseline |
+|---|---|---|
+| AUC | **0.934** | 0.652 |
+| Accuracy | **86.3%** | — |
+| AUC at 0.3× downscale | **0.914** | — |
+| Indian-face test set | **100% cleared** | 9.5% mean real-score |
 
-| Test set | Result |
+The checkpoint ships in this repository at `models/face/faceguard_cnn.pt`.
+
+### Voice
+
+| Condition | Result |
 |---|---|
-| Real speech — 20 samples, FoR dataset | 80% correctly approved |
-| Synthetic — 2019-era TTS/VC, 20 samples | 35% caught |
-| Synthetic — modern neural TTS (Edge Neural) | **0% caught** |
+| Real speech | 80% correctly approved |
+| 2019-era synthetic | 35% caught |
+| Modern neural TTS | **0% caught** |
 
-The 0% is load-bearing. It is precisely why TrustLine does not ask *"does this
-voice sound real?"* but *"does this caller know a code only our server could
-have minted?"* — a possession factor, not a detection guess.
+This ceiling is the reason TrustLine and LiveChallenge exist. Voice models are a
+first filter and never the final word.
 
 ---
 
 ## Disclosed bias
 
-Both are real, measured, and stated in the deck rather than smoothed out.
+A public baseline over-flags South Asian faces, assigning genuine Indian faces a
+mean real-score of **9.5%** on our 15-image test set.
 
-- **Face** — Model 1 assigns Indian real faces an average real-score of 9.5%
-  (trained on FFHQ, which under-represents South Asian faces). In the current
-  ensemble this routes 100% of genuine Indian applicants to manual review. Safe,
-  but not fair, and not free.
-- **Voice** — both models misclassify certain female vocal profiles as synthetic,
-  ~20% false-positive rate on real female speech. Ruled out file-format artefacts
-  via a `.wav` conversion test; the scores did not move.
+We measured it, published it, and contained it:
 
-**Containment already shipped:** a spoof verdict never triggers automatic
-rejection. It routes to a human. Uncertainty *never* escalates to the fraud desk
-— only a confident positive identification of synthesis does. See
-`_resolve_band()` in `backend/app.py`; the reasoning is documented in the
-docstring because it is the whole safety argument.
+- That model **can never decide a verdict** — it is reported beside one, with its
+  measured AUC of 0.652 attached
+- **Uncertainty never escalates.** Only a confident, agreed detection of
+  synthesis reaches the fraud desk
+- **Absence of evidence is never suspicion.** A missing signal lowers assurance;
+  it never accuses
 
-**Correction on the roadmap:** fine-tune Model 1 on InDeepFake (Indian faces,
-7 languages) / MLADDC (6-Indian-language audio), or weight toward Model 2 for
-Indian-context inputs.
+This is RBI's FREE-AI framework applied rather than cited: measure it, disclose
+it, keep a human in the loop.
 
 ---
 
-## Layout
+## Assurance — the module that approves
+
+Between **70% and 85%** of first-time borrowers are rejected at the bureau check
+— not because they are bad credit, but because they are invisible to it. Every
+other module here says no. This one says yes, with the evidence written down.
+
+| Evidence | Weight | Why |
+|---|---|---|
+| Liveness challenge | 45 | A verifiable fact with a 0.80% blind-guess rate, costing twenty seconds |
+| Face analysis | 25 | A good model at 0.934 AUC — but still a model |
+| Capture quality | 15 | Detector scores fall with resolution on genuine faces too |
+| Network history | 15 | Government fraud-risk tier plus cross-lender consortium signals |
+
+Verified at ≥80, provisional at ≥55, insufficient below. Partial evidence earns
+partial credit, capped at 60%.
+
+> **This is not a credit score.** It answers whether this is a real, unique,
+> present human — not whether they can repay. Affordability remains the
+> underwriter's decision, and the product refuses to blur that line.
+
+---
+
+## Regulatory fit
+
+| Instrument | What it requires | How Litmus answers |
+|---|---|---|
+| **RBI KYC Master Directions**<br>Nov 2025, NBFC-specific | V-CIP must carry liveness and spoof detection with a high degree of accuracy, upgraded against emerging fraud | FaceGuard + LiveChallenge, with a documented evaluation record and a versioned checkpoint |
+| **RBI FREE-AI Framework**<br>Aug 2025, seven sutras | Fairness, transparency, accountability, explainability for high-risk financial AI | Bias measured and published; uncertainty routed to a human; every verdict carries its evidence trail |
+| **TRAI 1600-series**<br>NBFCs, Feb–Mar 2026 | A trusted number range for BFSI calls | 1600 authenticates the *number*; TrustLine authenticates the *human*, and survives caller-ID spoofing by construction |
+
+**Data protection.** Consortium sharing carries salted pseudonyms of attacker
+numbers only. No customer identifier ever crosses an institutional boundary —
+and `contribute()` accepts no customer argument at all. The guarantee is
+structural, not procedural.
+
+---
+
+## API
+
+31 routes under `/api/v1`. The ones that matter:
+
+**Inbound**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/face/analyze` | FaceGuard verdict with calibration and quality gates |
+| `POST` | `/verify/score` | Fused trust score across available evidence |
+| `POST` | `/livechallenge/issue` | Mint a signed challenge |
+| `POST` | `/livechallenge/verify` | Verify a response — head pose + speech presence |
+| `POST` | `/assurance/assess` | Graded identity-assurance score |
+
+**Outbound**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/trustline/initiate` | Mint an authenticated outbound call session |
+| `POST` | `/trustline/verify` | Customer-side verification of a call |
+| `GET` | `/trustline/fraud-feed` | Live fraud intelligence and campaign alerts |
+
+**Records and intelligence**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/report/livechallenge/{id}` | Signed PDF record of a challenge |
+| `GET` | `/report/verify` | Check a record's verification code |
+| `GET` | `/intel/fri/check/{number}` | DoT Financial Fraud Risk Indicator lookup |
+| `GET` | `/intel/consortium/lookup/{number}` | Cross-lender signal lookup |
+
+Interactive docs at `/docs` when the server is running.
+
+---
+
+## Repository layout
 
 ```
-backend/
-  app.py               FastAPI — all endpoints, fusion, banding, console serving
-  trustline.py         TrustLine protocol (HMAC, sessions, fraud intelligence)
-  test_trustline.py    36 adversarial protocol tests
-frontend/
-  console.html         Trust Operations Console (served at /console)
-models/
-  face/                FaceGuard — two models + fusion + evaluation scripts
-  voice/               VoicePrint — two models + fusion + evaluation scripts
-run_backend.py         Starts the API, freeing port 8000 first
+backend/            FastAPI service
+  app.py              31 API routes + health and console serving
+  trustline.py        outbound call authentication
+  livechallenge.py    inbound challenge-response
+  audio_check.py      server-side speech presence detection
+  assurance.py        graded evidence scoring
+  report.py           HMAC-signed PDF records
+  fri.py              DoT fraud-risk client
+  consortium.py       cross-lender sharing
+frontend/web/       React 19 + Vite console and site
+models/face/        FaceGuard — fine-tuned checkpoint, training and evaluation
+models/voice/       VoicePrint — evaluation and fusion
+docs/img/           architecture and protocol diagrams
 ```
 
 ---
 
-## Models
+## Deployment
 
-**FaceGuard runs on `models/face/faceguard_cnn.pt`** — a ResNet18 fine-tuned
-here on 10,000 images with capture-degradation augmentation (random downscale
-and JPEG recompression), so it holds up on the low-resolution captures a real
-onboarding flow produces. It scores **AUC 0.934 / 86.3% accuracy**, and 0.914
-AUC even at 0.3x downscale. The checkpoint ships in this repository.
+Full guide in **[DEPLOYMENT.md](DEPLOYMENT.md)**. The three things that bite:
 
-Two public checkpoints are pulled from HuggingFace at runtime and reported as
-*second opinions* only. They are baselines, not the decision-maker: measured on
-the same data they reach **AUC 0.652 and 0.513** — the second is barely above
-chance. Both are shown with that caveat attached rather than quietly averaged
-in, and neither can decide a verdict alone.
+1. **HTTPS is mandatory** — no secure context, no camera, and it fails silently
+2. **`--workers 1`** — sessions live in process memory; a second worker breaks
+   LiveChallenge about half the time in a way that looks like a random bug
+3. **~375 MB resident** — measured. Fits a 1 GB instance comfortably
 
-Voice checks likewise call two public audio-classification checkpoints on
-demand. Their measured ceiling against modern neural TTS is why Litmus does not
-rest on detection at all, and why the challenge-response protocols exist.
-
-The engineering here is the fine-tuned checkpoint, the calibration and quality
-gates in `faceguard.py`, the TrustLine and LiveChallenge protocols, the
-assurance scoring, and the decision to architect around a measured detection
-ceiling instead of pretending there isn't one.
+TensorFlow was deliberately removed from the face path after measuring it at
+**338 MB resident** — more than torch, torchvision and every Litmus model
+combined — purely to locate five landmarks. `facenet-pytorch` does the same work
+for roughly 30 MB.
 
 ---
 
-## Production notes
+## Honest limits
 
-Things that are demo-scoped and would change for a pilot:
+Written down because a system that argues for honest measurement has to be
+honest about itself.
 
-- `_SESSIONS` / `_FRAUD_REPORTS` are in-memory dicts. Production: Redis with
-  native TTL for sessions, a durable event store for fraud reports.
-- `LITMUS_TRUSTLINE_SECRET` is read from the environment with a demo default.
-  Production: HSM/KMS custody with scheduled rotation.
-- CORS is `allow_origins=["*"]`. Lock down before anything leaves localhost.
+- **Sessions are in memory.** A restart loses them, and only one worker is safe.
+  Redis with native TTLs is the pilot change; the state is already isolated
+  behind two dictionaries.
+- **FRI runs in simulated mode** without Digital Intelligence Platform
+  credentials, and every response is flagged `simulated: true`. A demo that
+  passes simulated government data off as real is the exact dishonesty this
+  project exists to argue against.
+- **The voice models cannot catch modern TTS.** That is measured, published, and
+  designed around — not hidden.
+- **The second face baseline scores 0.513 AUC**, barely better than a coin toss.
+  It is shown precisely because averaging it into a verdict would hide that.
+- **Pre-pilot.** Every figure here is measured on this system or cited. None are
+  projected.
+
+---
+
+<div align="center">
+
+**Deepak Meena** · B.Tech CSE, 4th Year · IIIT Delhi
+
+Built for the TVS Credit E.P.I.C 8.0 IT Challenge
+
+</div>
