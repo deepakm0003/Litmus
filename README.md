@@ -200,22 +200,4 @@ Things that are demo-scoped and would change for a pilot:
   Production: HSM/KMS custody with scheduled rotation.
 - CORS is `allow_origins=["*"]`. Lock down before anything leaves localhost.
 
----
 
-## Third-party code in this repository
-
-`models/face/` and `models/voice/` began as clones of two open-source projects
-and still contain a small number of their original files:
-
-| Directory | Upstream | Files retained |
-|---|---|---|
-| `models/face/` | [aaronchong888/DeepFake-Detect](https://github.com/aaronchong888/DeepFake-Detect) (MIT) | 5 — the `00–03` dataset-preparation scripts |
-| `models/voice/` | [yzyouzhang/AIR-ASVspoof](https://github.com/yzyouzhang/AIR-ASVspoof) ([paper](https://arxiv.org/abs/2010.13995)) | 8 — `dataset.py`, `resnet.py`, `loss.py`, `train.py`, `test.py`, `eval_metrics.py`, `evaluate_tDCF_asvspoof19.py`, `reload_data.py` |
-
-Their READMEs are left in place. Everything else in this repository — the
-backend, the console, FaceGuard, the fine-tuned checkpoint and every evaluation
-script — is original work for Litmus.
-
-Neither upstream model is used at runtime. The face pipeline loads
-`faceguard_cnn.pt`, fine-tuned here; the voice models are pulled from Hugging
-Face on demand.
