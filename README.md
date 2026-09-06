@@ -170,13 +170,55 @@ short-circuit.
 
 ---
 
-## The console
+## Screens
 
-![Console wireframe](docs/img/dg_console.png)
+Six screens, wireframed. These are the interface as deployed — the figures shown
+are the current ones (three rounds, 0.80%), not the values the older screenshots
+still carry.
 
-Six tabs: applicant verification, LiveChallenge, Assurance, TrustLine, fraud
-desk, consortium. React 19 + Vite, built to a single self-contained bundle and
-served same-origin at `/console`.
+### How a case moves through the console
+
+![Screen flow](docs/img/wf_0_flow.png)
+
+### 1 · Applicant verification
+
+![Applicant verification wireframe](docs/img/wf_1_applicant.png)
+
+The verdict comes from the fine-tuned detector. The two public baselines are
+listed beneath it with their measured AUC attached, and neither can decide a
+case. Low confidence or a small face crop routes to a person.
+
+### 2 · LiveChallenge
+
+![LiveChallenge wireframe](docs/img/wf_2_livechallenge.png)
+
+The instruction is generated after the session opens. Round dots track progress,
+the camera auto-captures on a countdown so the applicant never has to find a
+button while their head is turned, and the spoken word is checked on the server.
+
+### 3 · Assurance
+
+![Assurance wireframe](docs/img/wf_3_assurance.png)
+
+The only screen that says yes. Each signal contributes a capped share of the
+score and shows what it contributed, so an officer can see the evidence rather
+than a number. The disclaimer sits at the top of the screen, not in a footnote.
+
+### 4 · TrustLine
+
+![TrustLine wireframe](docs/img/wf_4_trustline.png)
+
+Agent on the left, customer on the right. The three attack buttons are real —
+they run replay, cross-session substitution and brute force against the live
+protocol, and all three are blocked.
+
+### 5 · Fraud desk and consortium
+
+![Fraud desk wireframe](docs/img/wf_5_frauddesk.png)
+
+Six failures from one number in an hour is a campaign, not an incident. The
+consortium panel shows a number that is clean on the government register but
+already flagged by two other lenders — the case no single lender can see.
 
 ---
 
