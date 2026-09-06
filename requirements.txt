@@ -1,0 +1,24 @@
+# Root requirements file.
+#
+# This exists because Render's default build command is
+# `pip install -r requirements.txt`, run from the repository root. The real
+# dependency list lives in backend/requirements.txt; this pulls it in and adds
+# the one thing that must differ on a Linux server.
+#
+# CPU-only torch: the default PyPI wheels bundle the NVIDIA CUDA runtime,
+# roughly 2 GB of GPU libraries that are dead weight on a CPU instance and are
+# liable to exhaust the build disk. The +cpu builds exist only on PyTorch's own
+# index, so naming them explicitly forces pip to take them from there.
+#
+# Per PEP 440, `torch==2.2.1` in backend/requirements.txt is satisfied by
+# 2.2.1+cpu, so there is no conflict when that file is processed below.
+#
+# The markers keep this file usable on Windows and macOS, where no +cpu build
+# is published — there the plain wheels from backend/requirements.txt are used.
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.2.1+cpu; sys_platform == "linux"
+torchvision==0.17.1+cpu; sys_platform == "linux"
+
+-r backend/requirements.txt
