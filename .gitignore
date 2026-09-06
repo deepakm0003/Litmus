@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+# Litmus — what does not belong in the repository
+# ---------------------------------------------------------------------------
+
+# Secrets. Every credential is read from the environment; nothing is committed.
+.env
+.env.*
+*.pem
+*.key
+
+# ---- Presentation material (not part of the product) ----------------------
+*.pptx
+build_deck.py
+build_deck_v2.py
+render_deck.py
+shots/
+deck_png/
+deck2_png/
+
+# ---- Training data and research artifacts ---------------------------------
+# 11 GB of Kaggle corpora, cropped faces and sample videos. The repository
+# ships the two checkpoints the runtime actually loads; the data that produced
+# them is reproducible from the scripts and is not distributed here.
+models/**/kaggle_data/
+models/face/prepared_dataset/
+models/face/split_dataset/
+models/face/img/
+models/face/train_sample_videos/
+models/voice/models1028/
+models/voice/m4a_test/
+models/voice/test_audio/
+models/**/*.ipynb
+models/**/checkpoint_cm_score*
+*.npy
+
+# Scratch outputs from local test runs
+scores/
+results/
+*_scores.csv
+*_results.json
+test_*.jpg
+test_*.png
+test_*.wav
+test_*.m4a
+captured_*.jpg
+uploads/
+
+# ---- Environments and build output ----------------------------------------
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+node_modules/
+.vite/
+*.log
+
+# ---- Editor / OS ----------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/

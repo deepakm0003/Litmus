@@ -1,0 +1,157 @@
+/* =====================================================================
+   Forensic scan — the analysis made visible.
+   The motion is functional: each element corresponds to a real pipeline
+   stage, and the detection box is drawn from the coordinates MTCNN
+   actually returned rather than being decorative.
+   ===================================================================== */
+
+.scan-wrap { display: flex; flex-direction: column; gap: 18px; }
+
+.scan-stage {
+  position: relative; border-radius: 14px; overflow: hidden;
+  background: var(--lilac); border: 2px solid var(--lilac-line);
+  min-height: 220px; display: grid; place-items: center;
+}
+.scan-stage.is-scanning { border-color: var(--purple); }
+.scan-img { display: block; width: 100%; height: auto; max-height: 380px; object-fit: contain; }
+
+/* sweeping read head */
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--purple), transparent);
+  box-shadow: 0 0 18px 3px rgba(98, 49, 224, .55);
+  animation: scan-sweep 1.9s cubic-bezier(.55, 0, .45, 1) infinite;
+}
+@keyframes scan-sweep {
+  0%   { top: 0%;   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* faint analysis grid while scanning */
+.scan-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(98, 49, 224, .10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(98, 49, 224, .10) 1px, transparent 1px);
+  background-size: 26px 26px;
+  animation: grid-pulse 2.4s ease-in-out infinite;
+}
+@keyframes grid-pulse { 0%, 100% { opacity: .35; } 50% { opacity: .85; } }
+
+/* detection box locked onto the real bounding box */
+.scan-box {
+  position: absolute; border: 2px solid var(--purple);
+  border-radius: 4px; box-shadow: 0 0 0 9999px rgba(12, 8, 28, .12);
+  animation: box-lock .5s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+@keyframes box-lock {
+  from { opacity: 0; transform: scale(1.14); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.scan-corner { position: absolute; width: 14px; height: 14px; border: 3px solid var(--purple); }
+.scan-corner.tl { top: -3px; left: -3px; border-right: 0; border-bottom: 0; }
+.scan-corner.tr { top: -3px; right: -3px; border-left: 0; border-bottom: 0; }
+.scan-corner.bl { bottom: -3px; left: -3px; border-right: 0; border-top: 0; }
+.scan-corner.br { bottom: -3px; right: -3px; border-left: 0; border-top: 0; }
+.scan-box-label {
+  position: absolute; top: -26px; left: -2px;
+  background: var(--purple); color: #fff; font-family: var(--mono);
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; white-space: nowrap;
+}
+.scan-noface {
+  position: absolute; bottom: 12px; left: 12px; right: 12px;
+  background: #fdf6e8; border: 1px solid #f5dfb8; color: #8a5a0c;
+  font-family: var(--mono); font-size: 11px; padding: 8px 12px; border-radius: 8px; text-align: center;
+}
+
+/* pipeline stage list */
+.scan-stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.scan-step {
+  display: flex; align-items: center; gap: 12px; padding: 9px 12px;
+  border-radius: 10px; transition: background .25s;
+}
+.scan-dot {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  background: var(--lilac-deep); color: var(--ink-faint);
+  transition: background .25s, color .25s;
+}
+.scan-text { display: flex; flex-direction: column; line-height: 1.35; }
+.scan-text b { font-size: 13.5px; font-weight: 600; color: var(--ink-dim); }
+.scan-text em { font-style: normal; font-size: 11.5px; color: var(--ink-faint); }
+
+.scan-active { background: var(--purple-wash); }
+.scan-active .scan-dot { background: var(--purple); color: #fff; animation: dot-pulse 1s ease-in-out infinite; }
+.scan-active .scan-text b { color: var(--purple); }
+@keyframes dot-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.16); } }
+
+.scan-done .scan-dot { background: #dff5f2; color: #0a7d72; }
+.scan-done .scan-text b { color: var(--ink); }
+.scan-failed .scan-dot { background: #fdf0ee; color: #a8352a; }
+
+/* =====================================================================
+   Calibrated verdict + gate visualisation
+   ===================================================================== */
+.forensic { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--lilac-line); }
+.forensic-verdict { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fv-label {
+  font-family: var(--display); font-weight: 800; font-size: 26px;
+  letter-spacing: -.02em; text-transform: capitalize;
+}
+.fv-action {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 20px;
+}
+.fv-autoapprove .fv-label { color: var(--good); }
+.fv-autoapprove .fv-action { background: #dff5f2; color: #0a7d72; }
+.fv-routetoreview .fv-label { color: var(--warn); }
+.fv-routetoreview .fv-action { background: #fdf6e8; color: #8a5a0c; }
+.fv-escalate .fv-label { color: var(--bad); }
+.fv-escalate .fv-action { background: #fdf0ee; color: #a8352a; }
+
+.forensic-why { margin-top: 10px; font-size: 14px; color: var(--ink-dim); line-height: 1.6; }
+
+/* where this score sits between the two asymmetric gates */
+.gate-viz { margin-top: 22px; }
+.gate-track {
+  position: relative; display: flex; height: 12px;
+  border-radius: 7px; overflow: hidden; background: var(--lilac-deep);
+}
+.gate-zone { display: block; height: 100%; }
+.gate-esc { background: #f6c9c3; }
+.gate-grey { background: #f7e3bd; }
+.gate-ok { background: #a8e3db; }
+.gate-marker {
+  position: absolute; top: -5px; width: 3px; height: 22px;
+  background: var(--ink); border-radius: 2px; transform: translateX(-50%);
+  animation: marker-drop .6s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+@keyframes marker-drop { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; } }
+.gate-val {
+  position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+  background: var(--ink); color: #fff; padding: 2px 7px; border-radius: 5px; white-space: nowrap;
+}
+.gate-legend {
+  display: flex; justify-content: space-between; margin-top: 20px;
+  font-family: var(--mono); font-size: 10px; color: var(--ink-faint); gap: 8px;
+}
+.gate-legend .gate-here { color: var(--warn); font-weight: 700; }
+
+.forensic-rows { margin-top: 20px; display: flex; flex-direction: column; gap: 2px; }
+.frow {
+  display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  padding: 10px 0; border-bottom: 1px solid var(--lilac-line);
+  font-size: 13px;
+}
+.fk { color: var(--ink-faint); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+.fv { font-family: var(--mono); color: var(--ink-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-line, .scan-grid, .scan-box, .gate-marker, .scan-active .scan-dot { animation: none; }
+  .scan-line { display: none; }
+}

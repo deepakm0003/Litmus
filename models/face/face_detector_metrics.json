@@ -1,0 +1,70 @@
+{
+  "auc": 0.6752057777777777,
+  "accuracy": 0.631,
+  "n_per_class": 3000,
+  "n_features": 34,
+  "operating_points": {
+    "0.5": {
+      "coverage": 1.0,
+      "accuracy": 0.631,
+      "fakes_approved": 994
+    },
+    "0.7": {
+      "coverage": 0.1235,
+      "accuracy": 0.7921727395411606,
+      "fakes_approved": 86
+    },
+    "0.8": {
+      "coverage": 0.03183333333333333,
+      "accuracy": 0.8586387434554974,
+      "fakes_approved": 21
+    },
+    "0.9": {
+      "coverage": 0.0036666666666666666,
+      "accuracy": 0.9545454545454546,
+      "fakes_approved": 1
+    },
+    "0.95": {
+      "coverage": 0.001,
+      "accuracy": 1.0,
+      "fakes_approved": 0
+    }
+  },
+  "indian_face_real_rate": 0.9233333333333333,
+  "feature_names": [
+    "dct_grid",
+    "dct_hf_ratio",
+    "dct_mean",
+    "dct_std",
+    "dwt1_hh",
+    "dwt1_hh_std",
+    "dwt1_hl",
+    "dwt1_lh",
+    "dwt2_hh",
+    "dwt2_hh_std",
+    "dwt2_hl",
+    "dwt2_lh",
+    "fft_high",
+    "fft_high_low_ratio",
+    "fft_low",
+    "fft_mid",
+    "fft_profile_std",
+    "fft_r0",
+    "fft_r12",
+    "fft_r15",
+    "fft_r18",
+    "fft_r21",
+    "fft_r3",
+    "fft_r6",
+    "fft_r9",
+    "fft_slope",
+    "q_blockiness",
+    "q_height",
+    "q_lap_var",
+    "q_luma_std",
+    "q_noise",
+    "q_pixels",
+    "q_sat_mean",
+    "q_width"
+  ]
+}

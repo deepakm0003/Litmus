@@ -1,0 +1,45 @@
+{
+  "auc": 0.9340546622990172,
+  "accuracy": 0.863,
+  "operating_points": {
+    "0.5": {
+      "coverage": 1.0,
+      "accuracy": 0.863,
+      "fakes_approved": 123
+    },
+    "0.7": {
+      "coverage": 0.8645,
+      "accuracy": 0.9063042220936958,
+      "fakes_approved": 75
+    },
+    "0.8": {
+      "coverage": 0.78,
+      "accuracy": 0.9301282051282052,
+      "fakes_approved": 54
+    },
+    "0.9": {
+      "coverage": 0.6305,
+      "accuracy": 0.9444885011895321,
+      "fakes_approved": 31
+    },
+    "0.95": {
+      "coverage": 0.4715,
+      "accuracy": 0.9628844114528102,
+      "fakes_approved": 18
+    },
+    "0.99": {
+      "coverage": 0.1055,
+      "accuracy": 0.995260663507109,
+      "fakes_approved": 0
+    }
+  },
+  "robustness": {
+    "clean": 0.9340546622990172,
+    "small face (0.3x)": 0.9144447500687656,
+    "very small (0.15x)": 0.8231617113850616
+  },
+  "indian_face_real_rate": 1.0,
+  "n_per_class": 5000,
+  "epochs": 4,
+  "size": 128
+}
