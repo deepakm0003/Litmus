@@ -165,8 +165,7 @@ frontend/
 models/
   face/                FaceGuard — two models + fusion + evaluation scripts
   voice/               VoicePrint — two models + fusion + evaluation scripts
-build_deck.py          Generates Litmus_Round2_Deck.pptx
-render_deck.py         Renders the deck to PNGs for review
+run_backend.py         Starts the API, freeing port 8000 first
 ```
 
 ---
