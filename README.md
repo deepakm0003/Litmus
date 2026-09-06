@@ -171,22 +171,28 @@ render_deck.py         Renders the deck to PNGs for review
 
 ---
 
-## Models used
+## Models
 
-All four are public HuggingFace checkpoints, cited as such. We did not train
-them, and the deck says so. The original engineering is the fusion layer, the
-TrustLine protocol, and the decision to architect around a measured detection
-ceiling.
+**FaceGuard runs on `models/face/faceguard_cnn.pt`** — a ResNet18 fine-tuned
+here on 10,000 images with capture-degradation augmentation (random downscale
+and JPEG recompression), so it holds up on the low-resolution captures a real
+onboarding flow produces. It scores **AUC 0.934 / 86.3% accuracy**, and 0.914
+AUC even at 0.3x downscale. The checkpoint ships in this repository.
 
-- `prithivMLmods/Deep-Fake-Detector-Model` (face, M1)
-- `dima806/deepfake_vs_real_image_detection` (face, M2)
-- `MelodyMachine/Deepfake-audio-detection-V2` (voice, M1)
-- `motheecreator/Deepfake-audio-detection` (voice, M2)
+Two public checkpoints are pulled from HuggingFace at runtime and reported as
+*second opinions* only. They are baselines, not the decision-maker: measured on
+the same data they reach **AUC 0.652 and 0.513** — the second is barely above
+chance. Both are shown with that caveat attached rather than quietly averaged
+in, and neither can decide a verdict alone.
 
-Two upstream GitHub repos were evaluated and abandoned — `aaronchong888/DeepFake-Detect`
-(no shipped checkpoint, deprecated TF/Keras) and `yzyouzhang/AIR-ASVspoof`
-(MATLAB dependency, Python 3.6 / PyTorch 1.1 EOL, 2019-era training data). Do
-not revisit either.
+Voice checks likewise call two public audio-classification checkpoints on
+demand. Their measured ceiling against modern neural TTS is why Litmus does not
+rest on detection at all, and why the challenge-response protocols exist.
+
+The engineering here is the fine-tuned checkpoint, the calibration and quality
+gates in `faceguard.py`, the TrustLine and LiveChallenge protocols, the
+assurance scoring, and the decision to architect around a measured detection
+ceiling instead of pretending there isn't one.
 
 ---
 

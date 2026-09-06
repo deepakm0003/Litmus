@@ -1,0 +1,38 @@
+# Render blueprint for the Litmus backend.
+#
+# The backend serves the built console at /console from
+# frontend/web/dist/index.html, which is committed, so there is no Node build
+# step here and the whole thing is same-origin — no CORS, no API discovery.
+
+services:
+  - type: web
+    name: litmus
+    runtime: python
+    plan: standard          # ~2 GB RAM. The free 512 MB tier is killed on
+                            # startup: torch, tensorflow and MTCNN load at import.
+    buildCommand: pip install -r backend/requirements.txt
+    # --workers 1 is mandatory, not a preference. Sessions live in process
+    # memory, so a challenge minted by one worker is invisible to another and
+    # LiveChallenge fails about half the time.
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1 --app-dir backend
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      # Signing keys. Each has a development default that is public in this
+      # repository — generate real ones or the verification codes are forgeable.
+      #   python -c "import secrets; print(secrets.token_hex(32))"
+      - key: LITMUS_TRUSTLINE_SECRET
+        generateValue: true
+      - key: LITMUS_LIVECHALLENGE_SECRET
+        generateValue: true
+      - key: LITMUS_REPORT_SECRET
+        generateValue: true
+      - key: LITMUS_CONSORTIUM_SALT
+        generateValue: true
+      # Email is optional. Without these the record is still generated and the
+      # response reports sent:false with a reason — it never claims a delivery
+      # it did not make. Set them in the dashboard, never in this file.
+      - key: LITMUS_SMTP2GO_API_KEY
+        sync: false
+      - key: LITMUS_SMTP2GO_SENDER
+        sync: false

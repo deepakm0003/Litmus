@@ -8,7 +8,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist/ IS committed on purpose: the backend serves /console from
+# dist/index.html, so a deployment without it returns 503.
+# dist
 dist-ssr
 *.local
 

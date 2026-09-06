@@ -14,7 +14,10 @@ _FFMPEG_BIN = (
     r"\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe"
     r"\ffmpeg-9.0.1-full_build\bin"
 )
-if _FFMPEG_BIN not in os.environ.get("PATH", ""):
+# Windows-only convenience. On Linux (and any deployment host) ffmpeg is
+# on PATH already, so this block is skipped rather than prepending a
+# directory that does not exist there.
+if os.name == "nt" and _FFMPEG_BIN not in os.environ.get("PATH", ""):
     os.environ["PATH"] = _FFMPEG_BIN + os.pathsep + os.environ.get("PATH", "")
 
 
