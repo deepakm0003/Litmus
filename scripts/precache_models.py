@@ -16,11 +16,18 @@ import sys
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 
+# These strings are ADDRESSES, not credits. A Hugging Face model id is
+# "<namespace>/<name>" the way a URL is "<host>/<path>" — drop the namespace and
+# the request 401s and nothing is cached. Because the loop below deliberately
+# swallows failures so a Hub outage cannot fail a build, a shortened id here
+# fails SILENTLY: the build goes green, and the 1.9 GB download simply moves
+# back to whoever clicks first. Verified: the shortened forms return 401, the
+# full forms resolve.
 MODELS = [
-    ("image-classification", "Deep-Fake-Detector-Model"),
-    ("image-classification", "deepfake_vs_real_image_detection"),
-    ("audio-classification", "Deepfake-audio-detection-V2"),
-    ("audio-classification", "Deepfake-audio-detection"),
+    ("image-classification", "prithivMLmods/Deep-Fake-Detector-Model"),
+    ("image-classification", "dima806/deepfake_vs_real_image_detection"),
+    ("audio-classification", "MelodyMachine/Deepfake-audio-detection-V2"),
+    ("audio-classification", "motheecreator/Deepfake-audio-detection"),
 ]
 
 
