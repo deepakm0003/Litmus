@@ -105,7 +105,8 @@ checkpoints; run one yourself before demonstrating anything.
 
 ## LiveChallenge — proof instead of detection
 
-![LiveChallenge timeline]()
+<img width="1902" height="938" alt="image" src="https://github.com/user-attachments/assets/3c7a1147-1b9a-46e9-b01e-23a6fcafbd20" />
+
 
 Injection attacks rose roughly **9× in 2024**, driven by a **28× spike in
 virtual-camera exploits**. Generated video is fed straight into the verification
