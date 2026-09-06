@@ -8,11 +8,12 @@
 
 TVS Credit E.P.I.C 8.0 — IT Challenge · Problem Statement (b): Decoding Machine-Generated Trust
 
-**[▶ Open the live console](https://yea-rat-tagged-wages.trycloudflare.com/console)** · [Presentation script](PRESENTATION_SCRIPT.md) · [Deployment](DEPLOYMENT.md)
+**[▶ Open the live console](https://yea-rat-tagged-wages.trycloudflare.com/console)** 
 
 `FastAPI` · `React 19` · `PyTorch` · `HMAC-SHA256` · Deployed on AWS EC2 · 375 MB resident
 
 </div>
+<img width="1896" height="912" alt="Screenshot 2026-09-06 215509" src="https://github.com/user-attachments/assets/cf37440f-b6f5-40d2-a47a-44af763e0d9b" />
 
 ---
 
@@ -104,7 +105,7 @@ checkpoints; run one yourself before demonstrating anything.
 
 ## LiveChallenge — proof instead of detection
 
-![LiveChallenge timeline](docs/img/dg_livechallenge.png)
+![LiveChallenge timeline]()
 
 Injection attacks rose roughly **9× in 2024**, driven by a **28× spike in
 virtual-camera exploits**. Generated video is fed straight into the verification
@@ -137,7 +138,8 @@ uploaded bytes and measured for energy, modulation and voiced duration.
 
 ## TrustLine — the arrow points the other way
 
-![TrustLine inversion](docs/img/dg_trustline.png)
+<img width="1897" height="867" alt="Screenshot 2026-09-06 230045" src="https://github.com/user-attachments/assets/f1e11909-10fe-4126-8ee7-6690e39a1ded" />
+
 
 An OTP makes the customer prove themselves to the institution — exactly what
 every scam exploits. The rule *"never share your OTP"* fails because it asks a
@@ -182,7 +184,8 @@ still carry.
 
 ### 1 · Applicant verification
 
-![Applicant verification wireframe](docs/img/wf_1_applicant.png)
+<img width="1900" height="911" alt="Screenshot 2026-09-06 221757" src="https://github.com/user-attachments/assets/4e243241-ff0c-4e83-9c02-8303579305bf" />
+
 
 The verdict comes from the fine-tuned detector. The two public baselines are
 listed beneath it with their measured AUC attached, and neither can decide a
@@ -190,7 +193,8 @@ case. Low confidence or a small face crop routes to a person.
 
 ### 2 · LiveChallenge
 
-![LiveChallenge wireframe](docs/img/wf_2_livechallenge.png)
+<img width="1902" height="938" alt="image" src="https://github.com/user-attachments/assets/3c7a1147-1b9a-46e9-b01e-23a6fcafbd20" />
+
 
 The instruction is generated after the session opens. Round dots track progress,
 the camera auto-captures on a countdown so the applicant never has to find a
@@ -198,7 +202,8 @@ button while their head is turned, and the spoken word is checked on the server.
 
 ### 3 · Assurance
 
-![Assurance wireframe](docs/img/wf_3_assurance.png)
+<img width="1901" height="938" alt="image" src="https://github.com/user-attachments/assets/71bd8e4f-5371-45bb-aaf7-49defb4bf9bd" />
+
 
 The only screen that says yes. Each signal contributes a capped share of the
 score and shows what it contributed, so an officer can see the evidence rather
@@ -206,7 +211,8 @@ than a number. The disclaimer sits at the top of the screen, not in a footnote.
 
 ### 4 · TrustLine
 
-![TrustLine wireframe](docs/img/wf_4_trustline.png)
+<img width="1892" height="923" alt="image" src="https://github.com/user-attachments/assets/e11b3862-2134-47ba-b69b-4bc367f886b9" />
+
 
 Agent on the left, customer on the right. The three attack buttons are real —
 they run replay, cross-session substitution and brute force against the live
@@ -214,7 +220,8 @@ protocol, and all three are blocked.
 
 ### 5 · Fraud desk and consortium
 
-![Fraud desk wireframe](docs/img/wf_5_frauddesk.png)
+<img width="1842" height="942" alt="image" src="https://github.com/user-attachments/assets/eb2e41d4-ba6b-4443-90df-d9109518d22b" />
+
 
 Six failures from one number in an hour is a campaign, not an incident. The
 consortium panel shows a number that is clean on the government register but
